@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Кулинарный сервис</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #333; line-height: 1.6; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 20px; }
+        .search-section { background: white; padding: 25px; border-radius: 20px; margin-bottom: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        #searchInput { width: 100%; padding: 14px 20px; font-size: 16px; border: 2px solid #e0e0e0; border-radius: 40px; margin-bottom: 15px; }
+        #searchInput:focus { outline: none; border-color: #8bc34a; }
+        .filter-panel { background: #fff; padding: 15px; border-radius: 12px; }
+        .filter-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
+        .sort-btn { padding: 8px 18px; background: #f0f0f0; border: none; border-radius: 30px; cursor: pointer; transition: 0.2s; }
+        .sort-btn.active { background: #8bc34a; color: white; }
+        .exclude-input { padding: 8px 14px; border: 1px solid #ddd; border-radius: 30px; }
+        .reset-filters { background: #f0f0f0; border: none; padding: 8px 20px; border-radius: 30px; cursor: pointer; }
+        .rating-mode-btn { background: #ffe0b2; border: none; padding: 8px 18px; border-radius: 30px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+        .rating-mode-btn.active { background: #ff9800; color: white; box-shadow: 0 2px 6px rgba(255,152,0,0.3); }
+        .scroll-top { position: fixed; bottom: 40px; right: 40px; background: #8bc34a; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 24px; opacity: 0; visibility: hidden; z-index: 100; transition: 0.2s; }
+        .scroll-top.show { opacity: 1; visibility: visible; }
+        .menu-section { background: #f1f8e9; border: 2px solid #8bc34a; border-radius: 20px; padding: 20px; margin-bottom: 30px; }
+        .menu-title { font-size: 24px; color: #558b2f; margin-bottom: 20px; }
+        .menu-items { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .menu-item { background: white; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+        .portion-control { display: flex; gap: 10px; background: #f0f0f0; padding: 5px 12px; border-radius: 30px; }
+        .portion-control button { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0 8px; }
+        .remove-menu { background: #f0f0f0; border: none; padding: 6px 14px; border-radius: 30px; cursor: pointer; }
+        .total-summary { background: #f8f9fa; padding: 15px; border-radius: 12px; }
+        .category { margin-bottom: 40px; }
+        .category h2 { font-size: 28px; margin-bottom: 20px; border-left: 5px solid #8bc34a; padding-left: 15px; }
+        .recipe-card { background: white; border-radius: 20px; margin-bottom: 16px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .recipe-card:hover { box-shadow: 0 5px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .card-content { display: flex; padding: 16px; gap: 20px; flex-wrap: wrap; }
+        .card-image { width: 120px; height: 120px; object-fit: cover; border-radius: 12px; background: #f0f0f0; }
+        .image-wrapper { position: relative; flex-shrink: 0; }
+        .rating-controls { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; gap: 20px; opacity: 0; pointer-events: none; transition: 0.2s; }
+        .image-wrapper:hover .rating-controls { opacity: 1; pointer-events: auto; }
+        .rating-btn { background: rgba(0,0,0,0.7); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+        .card-info { flex: 1; min-width: 200px; }
+        .card-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        .card-description { color: #666; margin-bottom: 12px; }
+        .card-actions { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+        .btn-cook { background: #8bc34a; color: white; border: none; padding: 6px 18px; border-radius: 30px; cursor: pointer; }
+        .comment-badge { background: #f0f0f0; padding: 6px 14px; border-radius: 30px; cursor: pointer; }
+        .add-recipe-card { border: 2px dashed #ccc; text-align: center; padding: 30px; border-radius: 20px; cursor: pointer; transition: 0.3s; }
+        .add-recipe-card:hover { border-color: #8bc34a; background: #f1f8e9; }
+        .add-recipe-card .plus { font-size: 40px; color: #8bc34a; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; max-width: 900px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 30px; border-radius: 20px; }
+        .recipe-page { background: white; border-radius: 20px; padding: 30px; }
+        .back-button { background: #6c757d; color: white; border: none; padding: 10px 24px; border-radius: 30px; cursor: pointer; margin-bottom: 20px; }
+        .recipe-header { display: flex; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; }
+        .recipe-header-left { position: relative; flex: 1; min-width: 250px; }
+        .recipe-image { width: 100%; max-width: 350px; border-radius: 16px; background: #f0f0f0; min-height: 200px; object-fit: cover; }
+        .recipe-nutrition-overlay { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 30px; display: flex; gap: 12px; color: white; font-size: 12px; flex-wrap: wrap; }
+        .ingredients-block { background: #f8f9fa; padding: 25px; border-radius: 16px; margin: 25px 0; }
+        .portion-selector { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0; flex-wrap: wrap; }
+        .portion-control-large { display: flex; gap: 15px; background: white; padding: 5px 15px; border-radius: 40px; border: 1px solid #ddd; }
+        .portion-control-large button { background: none; border: none; font-size: 24px; cursor: pointer; padding: 0 12px; color: #8bc34a; }
+        .ingredient-row { display: flex; align-items: center; gap: 15px; padding: 10px; background: white; border-radius: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+        .ingredient-img { width: 50px; height: 50px; object-fit: cover; border-radius: 10px; background: #f0f0f0; }
+        .step-item { display: flex; gap: 20px; margin-bottom: 20px; padding: 20px; background: #fafafa; border-radius: 16px; flex-wrap: wrap; }
+        .step-img { width: 60px; height: 60px; object-fit: cover; border-radius: 10px; background: #f0f0f0; }
+        .recipe-actions { display: flex; gap: 15px; margin-top: 30px; flex-wrap: wrap; }
+        .edit-form input, .edit-form textarea, .edit-form select { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .edit-form label { font-weight: bold; display: block; margin-bottom: 5px; margin-top: 10px; }
+        .ingredient-edit-row, .step-edit-row { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .ingredient-edit-row input, .ingredient-edit-row select { flex: 1; min-width: 100px; margin-bottom: 0; }
+        .delete-recipe-btn { background: #dc3545; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; border: none; }
+        @media (max-width: 768px) { .card-content { flex-direction: column; } .card-image { width: 100%; height: 180px; } }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="Поиск по названию, ингредиенту или категории...">
+            <div class="filter-panel">
+                <div class="filter-group">
+                    <span><strong>Сортировка:</strong></span>
+                    <button class="sort-btn" data-sort="calories">По калориям</button>
+                    <button class="sort-btn" data-sort="time">По времени</button>
+                    <button class="sort-btn" data-sort="protein">Наиб. белка</button>
+                    <button class="sort-btn" data-sort="fat">Наим. жиров</button>
+                    <button id="ratingModeBtn" class="rating-mode-btn">⭐ Учитывать рейтинг</button>
+                </div>
+                <div class="filter-group">
+                    <span><strong>Исключить продукт:</strong></span>
+                    <input type="text" id="excludeProduct" class="exclude-input" placeholder="например: лук">
+                    <button id="resetFiltersBtn" class="reset-filters">Сбросить фильтры</button>
+                </div>
+            </div>
+        </div>
+        <div id="menuSection" class="menu-section" style="display: none;">
+            <div class="menu-title">Меню на сегодня</div>
+            <div id="menuItems" class="menu-items"></div>
+            <div id="totalSummary" class="total-summary"></div>
+        </div>
+        <div id="categoriesContainer"></div>
+        <div id="recipePage" style="display: none;"></div>
+    </div>
+    <div class="scroll-top" id="scrollTopBtn">↑</div>
+    <div id="editModal" class="modal"><div class="modal-content" id="editModalContent"></div></div>
+    <div id="commentModal" class="modal"><div class="modal-content"><h3>Комментарий</h3><p id="commentText"></p><button onclick="closeCommentModal()">Закрыть</button></div></div>
+
+    <script>
+     
+
+        let ratings = JSON.parse(localStorage.getItem('recipeRatings')) || {};
+        let cookMenu = JSON.parse(localStorage.getItem('cookMenu')) || [];
+        let currentSort = null;
+        let currentExclude = '';
+        let currentSearch = '';
+        let useRatingGrouping = false; 
+
+        function initRatings() { recipes.forEach(r => { if (ratings[r.id] === undefined) ratings[r.id] = r.rating; }); saveRatings(); }
+        function saveRatings() { localStorage.setItem('recipeRatings', JSON.stringify(ratings)); }
+        function saveRecipes() { 
+            try { localStorage.setItem('recipes', JSON.stringify(recipes)); return true; } 
+            catch(e) { if (e.name === 'QuotaExceededError') alert('Ошибка: превышен лимит localStorage!'); else alert('Ошибка сохранения: ' + e.message); return false; }
+        }
+        function loadRecipes() { const saved = localStorage.getItem('recipes'); if (saved) { recipes = JSON.parse(saved); } initRatings(); }
+
+        function changeRating(recipeId, delta, event) {
+            if (event) event.stopPropagation();
+            let newRating = (ratings[recipeId] || 0) + delta;
+            if (newRating < 0) newRating = 0;
+            ratings[recipeId] = newRating;
+            saveRatings();
+            renderCategories();
+        }
+
+        function calculateRecipeCostPerPortion(recipe) {
+            let total = 0;
+            recipe.ingredients.forEach(ing => {
+                total += ing.pricePerUnit || 0;
+            });
+            return total;
+        }
+        
+        function calculateCostForPortions(recipe, portions) {
+            return calculateRecipeCostPerPortion(recipe) * portions;
+        }
+
+        function deleteRecipe(recipeId, event) {
+            if (event) event.stopPropagation();
+            if (confirm('Удалить рецепт?')) {
+                recipes = recipes.filter(r => r.id !== recipeId);
+                delete ratings[recipeId];
+                cookMenu = cookMenu.filter(item => item.id !== recipeId);
+                localStorage.setItem('cookMenu', JSON.stringify(cookMenu));
+                saveRecipes();
+                saveRatings();
+                renderCategories();
+                renderMenu();
+                if (currentRecipe && currentRecipe.id === recipeId) closeRecipePage();
+            }
+        }
+
+        function addToMenu(recipeId) {
+            if (!cookMenu.find(item => item.id === recipeId)) { cookMenu.push({ id: recipeId, portions: 1 }); localStorage.setItem('cookMenu', JSON.stringify(cookMenu)); }
+            renderMenu(); renderCategories();
+        }
+        function removeFromMenu(recipeId) { cookMenu = cookMenu.filter(item => item.id !== recipeId); localStorage.setItem('cookMenu', JSON.stringify(cookMenu)); renderMenu(); renderCategories(); }
+        function updatePortion(recipeId, newPortions) { const item = cookMenu.find(i => i.id === recipeId); if (item && newPortions >= 1) { item.portions = newPortions; localStorage.setItem('cookMenu', JSON.stringify(cookMenu)); renderMenu(); } }
+
+        function renderMenu() {
+            const menuSection = document.getElementById('menuSection');
+            const menuContainer = document.getElementById('menuItems');
+            const totalDiv = document.getElementById('totalSummary');
+            if (cookMenu.length === 0) { menuSection.style.display = 'none'; return; }
+            menuSection.style.display = 'block';
+            let html = '', totalCost = 0, allIngredients = {};
+            cookMenu.forEach(menuItem => {
+                const recipe = recipes.find(r => r.id === menuItem.id);
+                if (!recipe) return;
+                const portions = menuItem.portions;
+                let recipeCost = calculateCostForPortions(recipe, portions);
+                totalCost += recipeCost;
+                recipe.ingredients.forEach(ing => { 
+                    let totalAmount = ing.amount * portions; 
+                    const key = ing.name; 
+                    if (allIngredients[key]) allIngredients[key].amount += totalAmount; 
+                    else allIngredients[key] = { name: ing.name, amount: totalAmount, unit: ing.unit }; 
+                });
+                html += `<div class="menu-item"><div><strong>${recipe.name}</strong><br><small>${portions} порц. × ${Math.round(recipeCost / portions)} руб = ${Math.round(recipeCost)} руб</small></div><div class="portion-control"><button onclick="updatePortion(${recipe.id}, ${portions-1})">-</button><span>${portions}</span><button onclick="updatePortion(${recipe.id}, ${portions+1})">+</button><button class="remove-menu" onclick="removeFromMenu(${recipe.id})">Удалить</button></div></div>`;
+            });
+            let ingredientsHtml = '<h4>Общий список продуктов:</h4><ul>';
+            for (let key in allIngredients) ingredientsHtml += `<li>${allIngredients[key].name}: ${allIngredients[key].amount} ${allIngredients[key].unit}</li>`;
+            ingredientsHtml += `</ul><strong>Общая стоимость: ${Math.round(totalCost)} руб</strong>`;
+            menuContainer.innerHTML = html;
+            totalDiv.innerHTML = ingredientsHtml;
+        }
+
+        let currentPortions = 1, currentRecipe = null;
+
+        function openRecipePage(recipeId) { 
+            currentRecipe = recipes.find(r => r.id === recipeId); 
+            if (!currentRecipe) return; 
+            currentPortions = 1; 
+            renderRecipePage(); 
+            document.getElementById('categoriesContainer').style.display = 'none'; 
+            document.getElementById('menuSection').style.display = 'none'; 
+            document.getElementById('recipePage').style.display = 'block';
+        }
+        
+        function renderRecipePage() {
+            if (!currentRecipe) return;
+            const recipe = currentRecipe;
+            const recipeHtml = `<button class="back-button" onclick="closeRecipePage()">← Назад</button><div class="recipe-page"><div class="recipe-header"><div class="recipe-header-left">${recipe.image ? `<img src="${recipe.image}" class="recipe-image" onerror="this.src=''">` : '<div class="recipe-image" style="display:flex; align-items:center; justify-content:center;">Нет фото</div>'}<div class="recipe-nutrition-overlay"><span>${recipe.time} мин</span><span>${recipe.calories} ккал</span><span>${recipe.protein}г белка</span><span>${recipe.fat}г жиров</span><span>${recipe.carbs}г углеводов</span></div></div><div class="recipe-header-right"><h1>${recipe.name}</h1><p>${recipe.fullDescription}</p><div class="recipe-price" id="recipeTotalPrice">Стоимость: ${Math.round(calculateCostForPortions(recipe, 1))} руб</div></div></div><div class="ingredients-block"><div class="portion-selector"><label>Порций:</label><div class="portion-control-large"><button onclick="changePortions(-1)">-</button><span id="portionsCount">1</span><button onclick="changePortions(1)">+</button></div><span>1 порция ≈ 160 г</span></div><div id="ingredientsList"></div></div><div class="steps-block"><h3>Приготовление</h3><div id="stepsList"></div></div><div class="recipe-actions"><button class="btn-cook" onclick="addToMenuFromPage(${recipe.id})">Приготовлю</button><button class="comment-badge" onclick="openCommentModal('${recipe.comment.replace(/'/g, "\\'")}')">Комментарий</button><button class="comment-badge" onclick="openEditModal(${recipe.id})">Редактировать</button><button class="delete-recipe-btn" onclick="deleteRecipe(${recipe.id}, event)">🗑 Удалить</button></div></div>`;
+            document.getElementById('recipePage').innerHTML = recipeHtml;
+            updateIngredientsAndSteps();
+        }
+        
+        function updateIngredientsAndSteps() {
+            if (!currentRecipe) return;
+            const portions = currentPortions;
+            const ingredientsContainer = document.getElementById('ingredientsList');
+            if (ingredientsContainer) {
+                let html = '';
+                currentRecipe.ingredients.forEach(ing => { const totalAmount = ing.amount * portions; html += `<div class="ingredient-row">${ing.image ? `<img src="${ing.image}" class="ingredient-img" onerror="this.src=''">` : '<div class="ingredient-img" style="background:#e9ecef; display:flex; align-items:center; justify-content:center;"></div>'}<div style="flex:2;"><strong>${ing.name}</strong></div><div>${totalAmount} ${ing.unit}</div><div>${ing.pricePerUnit} руб</div></div>`; });
+                ingredientsContainer.innerHTML = html;
+            }
+            const priceElement = document.getElementById('recipeTotalPrice');
+            if (priceElement) priceElement.innerHTML = `Стоимость: ${Math.round(calculateCostForPortions(currentRecipe, portions))} руб`;
+            const stepsContainer = document.getElementById('stepsList');
+            if (stepsContainer) {
+                let stepsHtml = '';
+                currentRecipe.steps.forEach(step => { stepsHtml += `<div class="step-item">${step.image ? `<img src="${step.image}" class="step-img" onerror="this.src=''">` : '<div class="step-img" style="background:#e9ecef; display:flex; align-items:center; justify-content:center;"></div>'}<div><strong>Шаг ${step.step}</strong><br>${step.description}</div></div>`; });
+                stepsContainer.innerHTML = stepsHtml;
+            }
+        }
+        
+        function changePortions(delta) { let newPortions = currentPortions + delta; if (newPortions < 1) newPortions = 1; if (newPortions > 10) newPortions = 10; currentPortions = newPortions; const span = document.getElementById('portionsCount'); if (span) span.innerText = currentPortions; updateIngredientsAndSteps(); }
+        function addToMenuFromPage(recipeId) { addToMenu(recipeId); closeRecipePage(); }
+        function closeRecipePage() { document.getElementById('categoriesContainer').style.display = 'block'; document.getElementById('recipePage').style.display = 'none'; renderMenu(); renderCategories(); }
+
+        function openEditModal(recipeId) {
+            const recipe = recipes.find(r => r.id === recipeId);
+            if (!recipe) return;
+            const modal = document.getElementById('editModal');
+            const modalContent = document.getElementById('editModalContent');
+            modalContent.innerHTML = `
+                <h2>Редактирование: ${recipe.name}</h2>
+                <form class="edit-form" onsubmit="saveRecipe(${recipeId}); return false;">
+                    <label>Название блюда:</label>
+                    <input type="text" id="edit_name" value="${recipe.name.replace(/"/g, '&quot;')}">
+                    <label>Категория:</label>
+                    <select id="edit_category">
+                        <option value="Основные блюда" ${recipe.category === 'Основные блюда' ? 'selected' : ''}>Основные</option>
+                        <option value="Супы" ${recipe.category === 'Супы' ? 'selected' : ''}>Супы</option>
+                        <option value="Салаты" ${recipe.category === 'Салаты' ? 'selected' : ''}>Салаты</option>
+                        <option value="Десерты" ${recipe.category === 'Десерты' ? 'selected' : ''}>Десерты</option>
+                        <option value="Напитки" ${recipe.category === 'Напитки' ? 'selected' : ''}>Напитки</option>
+                    </select>
+                    <label>Краткое описание:</label>
+                    <textarea id="edit_description" rows="2">${recipe.description}</textarea>
+                    <label>Полное описание:</label>
+                    <textarea id="edit_fullDescription" rows="3">${recipe.fullDescription}</textarea>
+                    <label>Путь к фото блюда (URL):</label>
+                    <input type="text" id="edit_image" value="${recipe.image || ''}">
+                    <label>Время (мин):</label>
+                    <input type="number" id="edit_time" value="${recipe.time}">
+                    <label>Калории:</label>
+                    <input type="number" id="edit_calories" value="${recipe.calories}" step="0.1">
+                    <label>Белки:</label>
+                    <input type="number" id="edit_protein" value="${recipe.protein}" step="0.1">
+                    <label>Жиры:</label>
+                    <input type="number" id="edit_fat" value="${recipe.fat}" step="0.1">
+                    <label>Углеводы:</label>
+                    <input type="number" id="edit_carbs" value="${recipe.carbs}" step="0.1">
+                    <label>Комментарий:</label>
+                    <textarea id="edit_comment" rows="2">${recipe.comment}</textarea>
+                    <h3>Ингредиенты</h3>
+                    <div id="ingredientsEditor"></div>
+                    <button type="button" onclick="addIngredientField()" style="background:#28a745; color:white; border:none; padding:8px 16px; border-radius:20px; margin:10px 0; cursor:pointer;">+ Добавить ингредиент</button>
+                    <h3>Шаги</h3>
+                    <div id="stepsEditor"></div>
+                    <button type="button" onclick="addStepField()" style="background:#28a745; color:white; border:none; padding:8px 16px; border-radius:20px; margin:10px 0; cursor:pointer;">+ Добавить шаг</button>
+                    <br><br>
+                    <button type="submit" style="background:#8bc34a; color:white; padding:12px 24px; border:none; border-radius:30px; cursor:pointer;">Сохранить</button>
+                    <button type="button" onclick="closeEditModal()" style="background:#6c757d; color:white; padding:12px 24px; border:none; border-radius:30px; cursor:pointer;">Отмена</button>
+                </form>
+            `;
+            const ingredientsDiv = document.getElementById('ingredientsEditor');
+            if (ingredientsDiv) {
+                ingredientsDiv.innerHTML = '';
+                recipe.ingredients.forEach((ing, idx) => {
+                    ingredientsDiv.innerHTML += `<div class="ingredient-edit-row" data-ing-idx="${idx}">
+                        <input type="text" placeholder="Название" id="ing_name_${idx}" value="${ing.name.replace(/"/g, '&quot;')}" style="flex:2;">
+                        <input type="number" placeholder="Кол-во" id="ing_amount_${idx}" value="${ing.amount}" step="0.1" style="width:80px;">
+                        <select id="ing_unit_${idx}" style="width:70px;"><option value="г" ${ing.unit === 'г' ? 'selected' : ''}>г</option><option value="шт" ${ing.unit === 'шт' ? 'selected' : ''}>шт</option><option value="мл" ${ing.unit === 'мл' ? 'selected' : ''}>мл</option></select>
+                        <input type="text" placeholder="Путь к фото" id="ing_image_${idx}" value="${ing.image || ''}" style="flex:2;">
+                        <input type="number" placeholder="Цена (руб)" id="ing_price_${idx}" value="${ing.pricePerUnit}" step="0.01" style="width:90px;">
+                        <button type="button" onclick="removeIngredientField(this)" style="background:#dc3545; color:white; border:none; padding:4px 12px; border-radius:20px;">✖</button>
+                    </div>`;
+                });
+            }
+            const stepsDiv = document.getElementById('stepsEditor');
+            if (stepsDiv) {
+                stepsDiv.innerHTML = '';
+                recipe.steps.forEach((step, idx) => {
+                    stepsDiv.innerHTML += `<div class="step-edit-row" data-step-idx="${idx}">
+                        <input type="text" placeholder="Описание" id="step_desc_${idx}" value="${step.description.replace(/"/g, '&quot;')}" style="flex:3;">
+                        <input type="text" placeholder="Путь к фото" id="step_image_${idx}" value="${step.image || ''}" style="flex:2;">
+                        <button type="button" onclick="removeStepField(this)" style="background:#dc3545; color:white; border:none; padding:4px 12px; border-radius:20px;">✖</button>
+                    </div>`;
+                });
+            }
+            modal.style.display = 'flex';
+        }
+
+        function addIngredientField() { const idx = Date.now(); const div = document.createElement('div'); div.className = 'ingredient-edit-row'; div.innerHTML = `<input type="text" placeholder="Название" id="ing_name_${idx}" style="flex:2;"><input type="number" placeholder="Кол-во" id="ing_amount_${idx}" step="0.1" style="width:80px;"><select id="ing_unit_${idx}" style="width:70px;"><option value="г">г</option><option value="шт">шт</option><option value="мл">мл</option></select><input type="text" placeholder="Путь к фото" id="ing_image_${idx}" style="flex:2;"><input type="number" placeholder="Цена" id="ing_price_${idx}" step="0.01" style="width:90px;"><button type="button" onclick="removeIngredientField(this)" style="background:#dc3545; color:white; border:none; padding:4px 12px;">✖</button>`; document.getElementById('ingredientsEditor').appendChild(div); }
+        function addStepField() { const idx = Date.now(); const div = document.createElement('div'); div.className = 'step-edit-row'; div.innerHTML = `<input type="text" placeholder="Описание" id="step_desc_${idx}" style="flex:3;"><input type="text" placeholder="Путь к фото" id="step_image_${idx}" style="flex:2;"><button type="button" onclick="removeStepField(this)" style="background:#dc3545; color:white; border:none; padding:4px 12px;">✖</button>`; document.getElementById('stepsEditor').appendChild(div); }
+        function removeIngredientField(btn) { btn.parentElement.remove(); }
+        function removeStepField(btn) { btn.parentElement.remove(); }
+        
+        function saveRecipe(recipeId) {
+            const recipe = recipes.find(r => r.id === recipeId);
+            if (!recipe) return;
+            recipe.name = document.getElementById('edit_name')?.value || recipe.name;
+            recipe.category = document.getElementById('edit_category')?.value;
+            recipe.description = document.getElementById('edit_description')?.value;
+            recipe.fullDescription = document.getElementById('edit_fullDescription')?.value;
+            recipe.image = document.getElementById('edit_image')?.value;
+            recipe.time = parseInt(document.getElementById('edit_time')?.value) || 0;
+            recipe.calories = parseFloat(document.getElementById('edit_calories')?.value) || 0;
+            recipe.protein = parseFloat(document.getElementById('edit_protein')?.value) || 0;
+            recipe.fat = parseFloat(document.getElementById('edit_fat')?.value) || 0;
+            recipe.carbs = parseFloat(document.getElementById('edit_carbs')?.value) || 0;
+            recipe.comment = document.getElementById('edit_comment')?.value || '';
+            const newIngredients = [];
+            document.querySelectorAll('.ingredient-edit-row').forEach((row) => {
+                const nameVal = row.querySelector(`[id^="ing_name_"]`)?.value;
+                if (nameVal) {
+                    newIngredients.push({ 
+                        name: nameVal, 
+                        amount: parseFloat(row.querySelector(`[id^="ing_amount_"]`)?.value) || 0, 
+                        unit: row.querySelector(`[id^="ing_unit_"]`)?.value || 'г', 
+                        image: row.querySelector(`[id^="ing_image_"]`)?.value || '', 
+                        pricePerUnit: parseFloat(row.querySelector(`[id^="ing_price_"]`)?.value) || 0 
+                    });
+                }
+            });
+            recipe.ingredients = newIngredients;
+            const newSteps = [];
+            document.querySelectorAll('.step-edit-row').forEach((row, idx) => {
+                const desc = row.querySelector(`[id^="step_desc_"]`)?.value;
+                if (desc) newSteps.push({ step: idx+1, description: desc, image: row.querySelector(`[id^="step_image_"]`)?.value || '' });
+            });
+            recipe.steps = newSteps;
+            if (saveRecipes()) { closeEditModal(); renderCategories(); if (currentRecipe && currentRecipe.id === recipeId) { currentRecipe = recipe; renderRecipePage(); } alert('Сохранено'); }
+        }
+        
+        function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+        function openCommentModal(comment) { document.getElementById('commentText').innerText = comment; document.getElementById('commentModal').style.display = 'flex'; }
+        function closeCommentModal() { document.getElementById('commentModal').style.display = 'none'; }
+        
+        function renderCategories() {
+            let filtered = recipes.filter(recipe => {
+                const search = currentSearch.toLowerCase();
+                if (search && !recipe.name.toLowerCase().includes(search) && !recipe.category.toLowerCase().includes(search) && !recipe.ingredients.some(i => i.name.toLowerCase().includes(search))) return false;
+                if (currentExclude && recipe.ingredients.some(i => i.name.toLowerCase().includes(currentExclude.toLowerCase()))) return false;
+                return true;
+            });
+            const categories = ['Основные блюда', 'Супы', 'Салаты', 'Десерты', 'Напитки'];
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = '';
+            categories.forEach(cat => {
+                let catRecipes = filtered.filter(r => r.category === cat);
+                if (catRecipes.length === 0) return;
+                
+                catRecipes.sort((a, b) => {
+                    const ratingDiff = (ratings[b.id] || 0) - (ratings[a.id] || 0);
+                    if (ratingDiff !== 0) return ratingDiff;
+                    return a.id - b.id;
+                });
+             
+                if (useRatingGrouping && currentSort) {
+                    const grouped = {};
+                    catRecipes.forEach(r => {
+                        const rating = ratings[r.id] || 0;
+                        if (!grouped[rating]) grouped[rating] = [];
+                        grouped[rating].push(r);
+                    });
+                    const sortedRatings = Object.keys(grouped).sort((a,b) => b - a);
+                    catRecipes = [];
+                    sortedRatings.forEach(rating => {
+                        let group = grouped[rating];
+                        if (currentSort === 'calories') group.sort((a,b) => a.calories - b.calories);
+                        else if (currentSort === 'time') group.sort((a,b) => a.time - b.time);
+                        else if (currentSort === 'protein') group.sort((a,b) => b.protein - a.protein);
+                        else if (currentSort === 'fat') group.sort((a,b) => a.fat - b.fat);
+                        catRecipes.push(...group);
+                    });
+                } else if (currentSort) {
+                    if (currentSort === 'calories') catRecipes.sort((a,b) => a.calories - b.calories);
+                    else if (currentSort === 'time') catRecipes.sort((a,b) => a.time - b.time);
+                    else if (currentSort === 'protein') catRecipes.sort((a,b) => b.protein - a.protein);
+                    else if (currentSort === 'fat') catRecipes.sort((a,b) => a.fat - b.fat);
+                }
+                
+                let html = `<div class="category"><h2>${cat}</h2>`;
+                catRecipes.forEach(recipe => {
+                    const currentRating = ratings[recipe.id] || 0;
+                    html += `<div class="recipe-card" onclick="openRecipePage(${recipe.id})"><div class="card-content"><div class="image-wrapper" onclick="event.stopPropagation()">${recipe.image ? `<img src="${recipe.image}" class="card-image" onerror="this.src=''">` : '<div class="card-image" style="display:flex; align-items:center; justify-content:center;"></div>'}<div class="rating-controls"><button class="rating-btn" onclick="changeRating(${recipe.id}, 1, event)">↑</button><button class="rating-btn" onclick="changeRating(${recipe.id}, -1, event)">↓</button></div></div><div class="card-info"><div class="card-title">${recipe.name} ⭐ ${currentRating}</div><div class="card-description">${recipe.description}</div><div class="card-actions" onclick="event.stopPropagation()"><button class="btn-cook" onclick="addToMenu(${recipe.id})">Приготовлю</button><button class="comment-badge" onclick="openCommentModal('${recipe.comment.replace(/'/g, "\\'")}')">Комментарий</button></div></div></div></div>`;
+                });
+                html += `<div class="add-recipe-card" onclick="createNewRecipe()"><div class="plus">+</div><div>добавить рецепт</div></div></div>`;
+                container.innerHTML += html;
+            });
+        }
+        
+        function createNewRecipe() {
+            const newId = Math.max(...recipes.map(r => r.id), 0) + 1;
+            recipes.push({ id: newId, name: "Новый рецепт", category: "Основные блюда", description: "Описание", fullDescription: "Полное описание", image: "", time: 30, calories: 100, protein: 10, fat: 5, carbs: 15, ingredients: [{ name: "Ингредиент", amount: 100, unit: "г", pricePerUnit: 1, image: "" }], steps: [{ step: 1, description: "Шаг 1", image: "" }], comment: "Комментарий", rating: 3 });
+            ratings[newId] = 3;
+            saveRecipes(); saveRatings();
+            renderCategories();
+            openEditModal(newId);
+        }
+        
+        document.querySelectorAll('.sort-btn').forEach(btn => { btn.addEventListener('click', () => { currentSort = btn.dataset.sort; renderCategories(); }); });
+        document.getElementById('resetFiltersBtn').addEventListener('click', () => { currentSearch = ''; currentExclude = ''; currentSort = null; useRatingGrouping = false; document.getElementById('searchInput').value = ''; document.getElementById('excludeProduct').value = ''; document.getElementById('ratingModeBtn').classList.remove('active'); renderCategories(); });
+        document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value; renderCategories(); });
+        document.getElementById('excludeProduct').addEventListener('input', (e) => { currentExclude = e.target.value; renderCategories(); });
+        document.getElementById('ratingModeBtn').addEventListener('click', () => { useRatingGrouping = !useRatingGrouping; if(useRatingGrouping) document.getElementById('ratingModeBtn').classList.add('active'); else document.getElementById('ratingModeBtn').classList.remove('active'); renderCategories(); });
+        window.addEventListener('scroll', () => { const btn = document.getElementById('scrollTopBtn'); if (window.scrollY > 300) btn.classList.add('show'); else btn.classList.remove('show'); });
+        document.getElementById('scrollTopBtn').addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        
+        loadRecipes();
+        renderCategories();
+        renderMenu();
+    </script>
+</body>
+</html>
