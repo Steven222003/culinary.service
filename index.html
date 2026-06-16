@@ -142,7 +142,10 @@
             try { localStorage.setItem('recipes', JSON.stringify(recipes)); return true; } 
             catch(e) { if (e.name === 'QuotaExceededError') alert('Ошибка: превышен лимит localStorage!'); else alert('Ошибка сохранения: ' + e.message); return false; }
         }
-        function loadRecipes() { const saved = localStorage.getItem('recipes'); if (saved) { recipes = JSON.parse(saved); } initRatings(); }
+        function loadRecipes() {const saved = localStorage.getItem('recipes');if (saved) {recipes = JSON.parse(saved);} else {saveRecipes();
+    }
+    initRatings();
+}
 
         function changeRating(recipeId, delta, event) {
             if (event) event.stopPropagation();
