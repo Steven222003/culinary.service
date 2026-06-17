@@ -149,6 +149,15 @@
 
         // Показываем статистику при загрузке
         updateStats();
+        function loadFile(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('jsonInput').value = e.target.result;
+        showStatus('✅ Файл загружен! Нажмите "Импорт".', 'success');
+    };
+    reader.readAsText(file);
+}
     </script>
 </body>
 </html>
