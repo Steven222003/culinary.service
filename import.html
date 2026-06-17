@@ -46,6 +46,13 @@
             <button class="btn-export" onclick="exportData()">📤 Экспорт текущих</button>
         </div>
 
+        <div style="margin: 15px 0;">
+    <label style="background: #2196F3; color: white; padding: 10px 20px; border-radius: 30px; cursor: pointer; display: inline-block;">
+        📂 Загрузить JSON-файл
+        <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="loadFile(event)">
+    </label>
+</div>
+        
         <div id="status" class="status"></div>
         
         <div id="stats" class="stats">
